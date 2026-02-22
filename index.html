@@ -591,8 +591,8 @@
     <select id="bulkCar" style="flex:1;min-width:120px"></select>
   </div>
   <div style="display:flex;gap:8px;width:100%">
-    <button class="btn-all-drift" onclick="saveDemo('none')" style="flex:1">Drift All Rigs</button>
-    <button class="btn-all-race" onclick="saveDemo('none')" style="flex:1">Race All Rigs</button>
+    <button class="btn-all-drift" onclick="bulkSwitch('drift')" style="flex:1">Drift All Rigs</button>
+    <button class="btn-all-race" onclick="bulkSwitch('race')" style="flex:1">Race All Rigs</button>
   </div>
 </div>
 
@@ -688,6 +688,7 @@ function renderSlots() {
     const vmsBadge = s.source === 'vms' ? '<span class="badge-vms">VMS</span>' : '';
     const noDriftBadge = s.drift_disabled ? '<span class="badge-no-drift">NO DRIFT</span>' : '';
     const driftOn = !s.drift_disabled;
+    const idx = slots.indexOf(s);
     return `
       <div class="slot">
         <div class="slot-header">
@@ -695,7 +696,7 @@ function renderSlots() {
             <span class="drift-toggle">
               <span class="drift-toggle-label">Drift</span>
               <label class="toggle-switch">
-                <input type="checkbox" ${driftOn ? 'checked' : ''}>
+                <input type="checkbox" ${driftOn ? 'checked' : ''} onchange="toggleDrift(${idx}, this.checked)">
                 <span class="toggle-slider"></span>
               </label>
             </span>
@@ -711,20 +712,61 @@ function renderSlots() {
           ${s.car ? `<strong>Car:</strong> ${s.car}` : '<em>No session configured</em>'}
         </div>
         <div class="slot-controls">
-          <select>
+          <select id="track_${idx}" onchange="updateSlotTrack(${idx}, this.value)">
             ${catalog.tracks.map(t => `<option value="${t.id}" ${t.id === s.track ? 'selected' : ''}>${t.name}</option>`).join('')}
           </select>
-          <select>
+          <select id="car_${idx}" onchange="updateSlotCar(${idx}, this.value)">
             ${catalog.cars.map(c => `<option value="${c.id}" ${c.id === s.car ? 'selected' : ''}>${c.name}</option>`).join('')}
           </select>
         </div>
         <div class="slot-controls" style="margin-top: 8px;">
-          <button class="btn-drift" ${s.drift_disabled ? 'disabled' : ''}>${s.drift_disabled ? 'Drift (N/A)' : 'Drift'}</button>
-          <button class="btn-race">Race Reset</button>
+          <button class="btn-drift" onclick="switchSlot(${idx},'drift')" ${s.drift_disabled ? 'disabled' : ''}>${s.drift_disabled ? 'Drift (N/A)' : 'Drift'}</button>
+          <button class="btn-race" onclick="switchSlot(${idx},'race')">Race Reset</button>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// ── Slot interactions ──
+
+function switchSlot(idx, mode) {
+  const s = slots[idx];
+  if (mode === 'drift' && s.drift_disabled) return;
+  s.mode = mode;
+  s.track = document.getElementById('track_' + idx).value;
+  s.car = document.getElementById('car_' + idx).value;
+  s.status = 'running';
+  s.source = 'manual';
+  renderSlots();
+}
+
+function bulkSwitch(mode) {
+  const bulkTrack = document.getElementById('bulkTrack').value;
+  const bulkCar = document.getElementById('bulkCar').value;
+  slots.forEach(s => {
+    if (mode === 'drift' && s.drift_disabled) {
+      s.mode = 'race';
+    } else {
+      s.mode = mode;
+    }
+    s.track = bulkTrack;
+    s.car = bulkCar;
+    s.status = 'running';
+    s.source = 'manual';
+  });
+  renderSlots();
+}
+
+function updateSlotTrack(idx, val) { slots[idx].track = val; }
+function updateSlotCar(idx, val) { slots[idx].car = val; }
+
+function toggleDrift(idx, enabled) {
+  slots[idx].drift_disabled = !enabled;
+  if (!enabled && slots[idx].mode === 'drift') {
+    slots[idx].mode = 'race';
+  }
+  renderSlots();
 }
 
 // ── Panel toggles ──

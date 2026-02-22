@@ -490,7 +490,7 @@
   <div class="admin-tabs">
     <button class="admin-tab active" onclick="switchAdminTab('rigs')">Rigs</button>
     <button class="admin-tab" onclick="switchAdminTab('vms')">VMS</button>
-    <button class="admin-tab" onclick="switchAdminTab('catalog')">Catalog</button>
+    <!-- <button class="admin-tab" onclick="switchAdminTab('catalog')">Catalog</button> -->
   </div>
 
   <div id="adminRigs" class="admin-tab-content active">
@@ -558,6 +558,7 @@
     <div class="admin-feedback" id="vmsFeedback"></div>
   </div>
 
+  <!-- Catalog tab commented out — track/car selection is controlled by VMS iPad kiosk
   <div id="adminCatalog" class="admin-tab-content">
     <h3 style="font-size:13px;color:#ccc;margin-bottom:6px">Tracks</h3>
     <table class="admin-table" id="adminTracksTable">
@@ -575,6 +576,7 @@
     <button class="btn-admin-save" onclick="saveDemo('catalogFeedback')">Save Catalog</button>
     <div class="admin-feedback" id="catalogFeedback"></div>
   </div>
+  -->
 </div>
 
 <div class="vms-bar" id="vmsBar">
@@ -654,7 +656,7 @@ let adminRigsData = [
   {id:"server_10", name:"Rig 10", cfg_path:"D:\\AcServer\\servers\\server_10\\cfg", exe_path:"D:\\AcServer\\servers\\server_10\\acServer.exe", udp_port:9610, tcp_port:9710, drift_disabled:true},
 ];
 
-let adminCatalogData = JSON.parse(JSON.stringify(catalog));
+// let adminCatalogData = JSON.parse(JSON.stringify(catalog)); // catalog admin disabled
 
 // ── Init ──
 
@@ -664,7 +666,7 @@ function init() {
   renderSlots();
   renderAdminRigs();
   renderAdminVms();
-  renderAdminCatalog();
+  // renderAdminCatalog(); // catalog admin disabled
 }
 
 function populateSelect(el, items) {
@@ -840,29 +842,29 @@ function renderAdminVms() {
   renderKvPairs('kvVehicleCar', {"Toyota AE86":"ks_toyota_ae86","Nissan Skyline R34":"ks_nissan_skyline_r34","Mazda RX-7 Spirit R":"ks_mazda_rx7_spirit_r"});
 }
 
-// ── Admin Catalog ──
-
-function renderAdminCatalog() {
-  document.getElementById('adminTracksBody').innerHTML = adminCatalogData.tracks.map((t, i) => `
-    <tr>
-      <td><input type="text" value="${esc(t.id)}"></td>
-      <td><input type="text" value="${esc(t.name)}"></td>
-      <td><button class="btn-admin-remove" onclick="removeAdminTrack(${i})" title="Remove">&times;</button></td>
-    </tr>
-  `).join('');
-  document.getElementById('adminCarsBody').innerHTML = adminCatalogData.cars.map((c, i) => `
-    <tr>
-      <td><input type="text" value="${esc(c.id)}"></td>
-      <td><input type="text" value="${esc(c.name)}"></td>
-      <td><button class="btn-admin-remove" onclick="removeAdminCar(${i})" title="Remove">&times;</button></td>
-    </tr>
-  `).join('');
-}
-
-function addAdminTrack() { adminCatalogData.tracks.push({id:'', name:''}); renderAdminCatalog(); }
-function addAdminCar() { adminCatalogData.cars.push({id:'', name:''}); renderAdminCatalog(); }
-function removeAdminTrack(idx) { adminCatalogData.tracks.splice(idx, 1); renderAdminCatalog(); }
-function removeAdminCar(idx) { adminCatalogData.cars.splice(idx, 1); renderAdminCatalog(); }
+// ── Admin Catalog (disabled — track/car selection controlled by VMS iPad kiosk) ──
+//
+// function renderAdminCatalog() {
+//   document.getElementById('adminTracksBody').innerHTML = adminCatalogData.tracks.map((t, i) => `
+//     <tr>
+//       <td><input type="text" value="${esc(t.id)}"></td>
+//       <td><input type="text" value="${esc(t.name)}"></td>
+//       <td><button class="btn-admin-remove" onclick="removeAdminTrack(${i})" title="Remove">&times;</button></td>
+//     </tr>
+//   `).join('');
+//   document.getElementById('adminCarsBody').innerHTML = adminCatalogData.cars.map((c, i) => `
+//     <tr>
+//       <td><input type="text" value="${esc(c.id)}"></td>
+//       <td><input type="text" value="${esc(c.name)}"></td>
+//       <td><button class="btn-admin-remove" onclick="removeAdminCar(${i})" title="Remove">&times;</button></td>
+//     </tr>
+//   `).join('');
+// }
+//
+// function addAdminTrack() { adminCatalogData.tracks.push({id:'', name:''}); renderAdminCatalog(); }
+// function addAdminCar() { adminCatalogData.cars.push({id:'', name:''}); renderAdminCatalog(); }
+// function removeAdminTrack(idx) { adminCatalogData.tracks.splice(idx, 1); renderAdminCatalog(); }
+// function removeAdminCar(idx) { adminCatalogData.cars.splice(idx, 1); renderAdminCatalog(); }
 
 // ── KV pair helpers ──
 

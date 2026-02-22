@@ -483,6 +483,12 @@
     <summary>Step 4: Configure Content Library</summary>
     <div><p>Click <strong>Admin</strong> &rarr; <strong>Catalog</strong> tab. Add tracks and cars that match your installed Assetto Corsa content.</p></div>
   </details>
+  <details>
+    <summary>Step 5: Configure Mode Settings (Driver Aids, Damage, Track Grip)</summary>
+    <div>
+      <p>Click <strong>Admin</strong> &rarr; <strong>Mode Settings</strong> tab to configure driver aids (ABS, TC, Stability Aid), wear/damage settings, and track grip for each mode. You can also set per-rig overrides for specific hardware configurations.</p>
+    </div>
+  </details>
 </div>
 
 <div class="admin-panel" id="adminPanel">
@@ -490,6 +496,7 @@
   <div class="admin-tabs">
     <button class="admin-tab active" onclick="switchAdminTab('rigs')">Rigs</button>
     <button class="admin-tab" onclick="switchAdminTab('vms')">VMS</button>
+    <button class="admin-tab" onclick="switchAdminTab('modesettings')">Mode Settings</button>
     <!-- <button class="admin-tab" onclick="switchAdminTab('catalog')">Catalog</button> -->
   </div>
 
@@ -556,6 +563,21 @@
     </div>
     <button class="btn-admin-save" onclick="saveDemo('vmsFeedback')">Save VMS Config</button>
     <div class="admin-feedback" id="vmsFeedback"></div>
+  </div>
+
+  <div id="adminModesettings" class="admin-tab-content">
+    <h3 style="font-size:14px;color:#e0e0e0;margin-bottom:10px">Drift Mode Defaults</h3>
+    <div id="msGlobalDrift" class="kv-section" style="margin-top:0"></div>
+    <h3 style="font-size:14px;color:#e0e0e0;margin:16px 0 10px">Race Mode Defaults</h3>
+    <div id="msGlobalRace" class="kv-section" style="margin-top:0"></div>
+    <button class="btn-admin-save" onclick="saveDemo('msFeedback')">Save Global Settings</button>
+    <div class="admin-feedback" id="msFeedback"></div>
+
+    <h3 style="font-size:14px;color:#e0e0e0;margin:24px 0 10px">Per-Rig Overrides</h3>
+    <p style="font-size:12px;color:#777;margin-bottom:10px">Check "Override" to customize a setting for a specific rig. Unchecked settings use the global defaults above.</p>
+    <div id="msPerRig"></div>
+    <button class="btn-admin-save" onclick="saveDemo('msPerRigFeedback')">Save Per-Rig Overrides</button>
+    <div class="admin-feedback" id="msPerRigFeedback"></div>
   </div>
 
   <!-- Catalog tab commented out — track/car selection is controlled by VMS iPad kiosk
@@ -666,6 +688,7 @@ function init() {
   renderSlots();
   renderAdminRigs();
   renderAdminVms();
+  renderDemoModeSettings();
   // renderAdminCatalog(); // catalog admin disabled
 }
 
@@ -794,10 +817,10 @@ function toggleAdmin() {
 function switchAdminTab(tab) {
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-  const tabs = { rigs: 'adminRigs', vms: 'adminVms', catalog: 'adminCatalog' };
+  const tabs = { rigs: 'adminRigs', vms: 'adminVms', modesettings: 'adminModesettings', catalog: 'adminCatalog' };
   document.getElementById(tabs[tab]).classList.add('active');
   const btns = document.querySelectorAll('.admin-tab');
-  const idx = { rigs: 0, vms: 1, catalog: 2 };
+  const idx = { rigs: 0, vms: 1, modesettings: 2, catalog: 3 };
   btns[idx[tab]].classList.add('active');
 }
 
@@ -865,6 +888,89 @@ function renderAdminVms() {
 // function addAdminCar() { adminCatalogData.cars.push({id:'', name:''}); renderAdminCatalog(); }
 // function removeAdminTrack(idx) { adminCatalogData.tracks.splice(idx, 1); renderAdminCatalog(); }
 // function removeAdminCar(idx) { adminCatalogData.cars.splice(idx, 1); renderAdminCatalog(); }
+
+// ── Mode Settings (demo data) ──
+
+const msSettingDefs = [
+  {key:"ABS_ALLOWED",section:"SERVER",label:"ABS",min:0,max:2},
+  {key:"TC_ALLOWED",section:"SERVER",label:"Traction Control",min:0,max:2},
+  {key:"STABILITY_ALLOWED",section:"SERVER",label:"Stability Aid",min:0,max:1},
+  {key:"AUTOCLUTCH_ALLOWED",section:"SERVER",label:"Auto Clutch",min:0,max:1},
+  {key:"TYRE_BLANKETS_ALLOWED",section:"SERVER",label:"Tyre Blankets",min:0,max:1},
+  {key:"DAMAGE_MULTIPLIER",section:"SERVER",label:"Damage %",min:0,max:100},
+  {key:"FUEL_RATE",section:"SERVER",label:"Fuel Rate %",min:0,max:200},
+  {key:"TYRE_WEAR_RATE",section:"SERVER",label:"Tyre Wear %",min:0,max:200},
+  {key:"SESSION_START",section:"DYNAMIC_TRACK",label:"Track Grip Start %",min:0,max:100},
+  {key:"RANDOMNESS",section:"DYNAMIC_TRACK",label:"Grip Randomness",min:0,max:4},
+  {key:"SESSION_TRANSFER",section:"DYNAMIC_TRACK",label:"Session Transfer %",min:0,max:100},
+  {key:"LAP_GAIN",section:"DYNAMIC_TRACK",label:"Lap Gain",min:0,max:100},
+];
+
+const msDefaults = {
+  drift: {ABS_ALLOWED:0,TC_ALLOWED:0,STABILITY_ALLOWED:0,AUTOCLUTCH_ALLOWED:1,TYRE_BLANKETS_ALLOWED:0,DAMAGE_MULTIPLIER:50,FUEL_RATE:100,TYRE_WEAR_RATE:100,SESSION_START:96,RANDOMNESS:1,SESSION_TRANSFER:90,LAP_GAIN:30},
+  race: {ABS_ALLOWED:1,TC_ALLOWED:1,STABILITY_ALLOWED:1,AUTOCLUTCH_ALLOWED:1,TYRE_BLANKETS_ALLOWED:1,DAMAGE_MULTIPLIER:50,FUEL_RATE:100,TYRE_WEAR_RATE:100,SESSION_START:96,RANDOMNESS:1,SESSION_TRANSFER:90,LAP_GAIN:30},
+};
+
+function renderDemoModeSettings() {
+  renderDemoModeSection('msGlobalDrift', 'drift');
+  renderDemoModeSection('msGlobalRace', 'race');
+  renderDemoPerRig();
+}
+
+function renderDemoModeSection(containerId, mode) {
+  const container = document.getElementById(containerId);
+  const defaults = msDefaults[mode];
+  container.innerHTML = msSettingDefs.map(def => `
+    <div class="kv-row">
+      <label style="width:160px;flex-shrink:0;color:#ccc;font-size:12px">${esc(def.label)}</label>
+      <input type="number" min="${def.min}" max="${def.max}" value="${defaults[def.key]}" style="width:70px;flex:none">
+      <span style="font-size:11px;color:#555;flex-shrink:0">(${def.min}\u2013${def.max})</span>
+    </div>
+  `).join('');
+}
+
+function renderDemoPerRig() {
+  const container = document.getElementById('msPerRig');
+  // Demo: Rig 6 has STABILITY_ALLOWED=1 override for drift, DAMAGE_MULTIPLIER=0 for race
+  const demoOverrides = {5: {drift:{STABILITY_ALLOWED:1}, race:{DAMAGE_MULTIPLIER:0}}};
+  container.innerHTML = adminRigsData.map((rig, i) => {
+    const overrides = demoOverrides[i] || {};
+    let inner = '';
+    ['drift', 'race'].forEach(mode => {
+      const modeOvr = overrides[mode] || {};
+      inner += `<h4 style="font-size:12px;color:#999;margin:8px 0 4px;text-transform:capitalize">${mode}</h4>`;
+      msSettingDefs.forEach(def => {
+        const has = def.key in modeOvr;
+        const val = has ? modeOvr[def.key] : msDefaults[mode][def.key];
+        inner += `
+          <div class="kv-row" style="gap:4px">
+            <label style="width:14px;flex-shrink:0">
+              <input type="checkbox" ${has ? 'checked' : ''} onchange="toggleDemoOverride(this)" style="accent-color:#e94560">
+            </label>
+            <label style="width:140px;flex-shrink:0;color:${has ? '#ccc' : '#555'};font-size:11px">${esc(def.label)}</label>
+            <input type="number" min="${def.min}" max="${def.max}" value="${val}" style="width:60px;flex:none" ${has ? '' : 'disabled'}>
+          </div>
+        `;
+      });
+    });
+    return `
+      <details style="margin-bottom:8px;border:1px solid #222;border-radius:6px;overflow:hidden">
+        <summary style="font-size:13px;font-weight:600;color:#e0e0e0;padding:8px 12px;cursor:pointer;background:#1a1a2e;list-style:none">
+          ${esc(rig.name || rig.id)}
+        </summary>
+        <div style="padding:8px 12px">${inner}</div>
+      </details>
+    `;
+  }).join('');
+}
+
+function toggleDemoOverride(checkbox) {
+  const row = checkbox.closest('.kv-row');
+  const input = row.querySelectorAll('input[type="number"]')[0];
+  const label = row.querySelectorAll('label')[1];
+  input.disabled = !checkbox.checked;
+  label.style.color = checkbox.checked ? '#ccc' : '#555';
+}
 
 // ── KV pair helpers ──
 

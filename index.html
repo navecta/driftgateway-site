@@ -346,6 +346,73 @@
     background: #0a0a14; color: #e0e0e0; border: 1px solid #333;
     padding: 4px 6px; border-radius: 4px; font-size: 12px; flex: 1;
   }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 640px) {
+    header {
+      padding: 14px 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    header h1 { font-size: 20px; }
+    .header-controls { gap: 8px; }
+    .bulk-section {
+      padding: 12px 16px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .bulk-section label { font-size: 12px; }
+    .bulk-section select { width: 100%; }
+    .bulk-section .btn-all-drift,
+    .bulk-section .btn-all-race {
+      width: 100%;
+      padding: 12px;
+    }
+    .grid { padding: 16px; gap: 12px; }
+    .slot { padding: 16px; }
+    .slot-header { flex-wrap: wrap; gap: 8px; }
+    .slot-name { font-size: 14px; }
+    .slot-controls { flex-direction: column; }
+    .slot-controls select { width: 100%; flex: none; }
+    .slot-controls button { width: 100%; padding: 12px; }
+    .vms-bar {
+      padding: 10px 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .help-panel, .setup-panel, .admin-panel {
+      padding: 16px;
+    }
+    .admin-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .admin-field { display: flex; flex-direction: column; gap: 4px; }
+    .admin-field label { width: 100%; }
+    .admin-field input[type="text"],
+    .admin-field input[type="number"],
+    .admin-field select {
+      width: 100% !important;
+    }
+    .kv-section { padding: 8px; }
+    .kv-row { flex-wrap: wrap; }
+    .kv-row input { min-width: 0; }
+    .admin-tabs { flex-wrap: wrap; }
+    .setup-panel details > div { padding: 10px; }
+    .setup-panel table { font-size: 11px; }
+    .setup-panel th, .setup-panel td { padding: 4px 6px; }
+    .drift-toggle { margin-left: 0; margin-top: 4px; }
+  }
+
+  @media (max-width: 380px) {
+    header h1 { font-size: 18px; }
+    .header-controls {
+      width: 100%;
+      justify-content: flex-end;
+    }
+    .grid { padding: 12px; gap: 10px; }
+    .slot { padding: 14px; }
+    .badge { font-size: 10px; padding: 2px 8px; }
+    .admin-tab { padding: 6px 12px; font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -531,12 +598,16 @@
 </div>
 
 <div class="bulk-section">
-  <label>Track:</label>
-  <select id="bulkTrack"></select>
-  <label>Car:</label>
-  <select id="bulkCar"></select>
-  <button class="btn-all-drift" onclick="saveDemo('none')">Drift All Rigs</button>
-  <button class="btn-all-race" onclick="saveDemo('none')">Race All Rigs</button>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%">
+    <label>Track:</label>
+    <select id="bulkTrack" style="flex:1;min-width:120px"></select>
+    <label>Car:</label>
+    <select id="bulkCar" style="flex:1;min-width:120px"></select>
+  </div>
+  <div style="display:flex;gap:8px;width:100%">
+    <button class="btn-all-drift" onclick="saveDemo('none')" style="flex:1">Drift All Rigs</button>
+    <button class="btn-all-race" onclick="saveDemo('none')" style="flex:1">Race All Rigs</button>
+  </div>
 </div>
 
 <div class="grid" id="slotGrid"></div>

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DriftGateway - Demo Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #e94560;
+  }
+  header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  header h1 span { color: #e94560; }
+  .header-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .bulk-section {
+    padding: 16px 32px;
+    background: #111119;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #222;
+  }
+  .bulk-section label {
+    font-size: 13px;
+    color: #999;
+  }
+  .bulk-section select {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 24px 32px;
+  }
+  .slot {
+    background: #14141f;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .slot:hover { border-color: #444; }
+  .slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .slot-name {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .badge-drift {
+    background: #e94560;
+    color: #fff;
+  }
+  .badge-race {
+    background: #0f3460;
+    color: #a0c4ff;
+  }
+  .slot-info {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .slot-info strong { color: #bbb; }
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .status-idle .status-dot { background: #555; }
+  .status-running .status-dot { background: #4ade80; }
+  .status-applying .status-dot { background: #facc15; animation: pulse 1s infinite; }
+  .status-error .status-dot { background: #ef4444; }
+  .status-timeout .status-dot { background: #f97316; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .slot-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .slot select {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    padding: 6px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  button {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    transition: opacity 0.2s;
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) { opacity: 0.85; }
+  .btn-drift { background: #e94560; color: #fff; }
+  .btn-race { background: #0f3460; color: #a0c4ff; }
+  .btn-all-drift { background: #e94560; color: #fff; }
+  .btn-all-race { background: #0f3460; color: #a0c4ff; }
+  .error-msg { color: #ef4444; font-size: 12px; margin-top: 8px; }
+  .dev-badge {
+    background: #facc15;
+    color: #000;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .demo-badge {
+    background: #7c3aed;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .btn-help {
+    background: #2a2a3e;
+    color: #aaa;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .btn-help:hover:not(:disabled) { color: #fff; }
+  .help-panel {
+    display: none;
+    background: #111119;
+    border-bottom: 1px solid #222;
+    padding: 20px 32px;
+    line-height: 1.7;
+    font-size: 13px;
+    color: #aaa;
+  }
+  .help-panel.open { display: block; }
+  .help-panel h2 { font-size: 15px; color: #e0e0e0; margin-bottom: 12px; }
+  .help-panel h3 { font-size: 13px; color: #ccc; margin-top: 14px; margin-bottom: 4px; }
+  .help-panel ul { margin-left: 20px; margin-bottom: 6px; }
+  .help-panel .help-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 700px) {
+    .help-panel .help-columns { grid-template-columns: 1fr; }
+  }
+  .btn-setup {
+    background: #2a2a3e;
+    color: #aaa;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-setup:hover:not(:disabled) { color: #fff; }
+  .setup-panel {
+    display: none;
+    background: #111119;
+    border-bottom: 1px solid #222;
+    padding: 20px 32px;
+    line-height: 1.7;
+    font-size: 13px;
+    color: #aaa;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .setup-panel.open { display: block; }
+  .setup-panel h2 { font-size: 15px; color: #e0e0e0; margin-bottom: 12px; }
+  .setup-panel details { margin-bottom: 8px; border: 1px solid #222; border-radius: 6px; overflow: hidden; }
+  .setup-panel summary { font-size: 14px; font-weight: 600; color: #e0e0e0; padding: 10px 14px; cursor: pointer; background: #1a1a2e; list-style: none; }
+  .setup-panel summary::-webkit-details-marker { display: none; }
+  .setup-panel summary::before { content: "\25B8 "; color: #e94560; }
+  .setup-panel details[open] > summary::before { content: "\25BE "; }
+  .setup-panel details > div { padding: 12px 14px; }
+  .setup-panel code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; font-size: 12px; color: #e94560; }
+  .setup-panel pre { background: #0a0a14; border: 1px solid #222; border-radius: 4px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+  .setup-panel pre code { background: none; padding: 0; color: #ccc; font-size: 12px; }
+  .setup-panel table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+  .setup-panel th { text-align: left; padding: 6px 10px; border-bottom: 2px solid #333; color: #e0e0e0; font-weight: 600; }
+  .setup-panel td { padding: 6px 10px; border-bottom: 1px solid #1a1a2e; }
+  .setup-panel ul, .setup-panel ol { margin-left: 20px; margin-bottom: 6px; }
+  .setup-panel h3 { font-size: 13px; color: #ccc; margin-top: 14px; margin-bottom: 4px; }
+  .setup-panel p { margin-bottom: 8px; }
+  .setup-panel a { color: #e94560; text-decoration: none; }
+  .setup-panel a:hover { text-decoration: underline; }
+  .help-panel code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; font-size: 12px; color: #e94560; }
+  .status-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; }
+  .status-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .vms-bar {
+    padding: 10px 32px;
+    background: #0d0d14;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: #888;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .vms-bar .vms-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .vms-bar .vms-label { font-weight: 600; color: #ccc; }
+  .vms-bar .vms-error { color: #ef4444; }
+  .badge-vms {
+    background: #7c3aed; color: #fff; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 10px;
+    letter-spacing: 0.5px; margin-left: 6px;
+  }
+  .badge-no-drift {
+    background: #f97316; color: #fff; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 10px;
+    letter-spacing: 0.5px; margin-left: 6px;
+  }
+  .drift-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; }
+  .drift-toggle-label { font-size: 11px; color: #666; user-select: none; }
+  .toggle-switch { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #f97316; border-radius: 18px; transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: ""; position: absolute; width: 14px; height: 14px;
+    left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #4ade80; }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+  /* Admin panel styles */
+  .btn-admin {
+    background: #2a2a3e; color: #aaa; font-size: 12px; padding: 4px 12px;
+    border-radius: 16px; height: 32px; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-admin:hover:not(:disabled) { color: #fff; }
+  .admin-panel {
+    display: none; background: #111119; border-bottom: 1px solid #222;
+    padding: 20px 32px; line-height: 1.7; font-size: 13px; color: #aaa;
+    max-height: 80vh; overflow-y: auto;
+  }
+  .admin-panel.open { display: block; }
+  .admin-panel h2 { font-size: 15px; color: #e0e0e0; margin-bottom: 12px; }
+  .admin-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .admin-tab {
+    background: #1a1a2e; color: #999; border: 1px solid #333;
+    padding: 6px 18px; border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .admin-tab:hover { color: #fff; }
+  .admin-tab.active { background: #14141f; color: #e94560; border-bottom-color: #14141f; }
+  .admin-tab-content { display: none; }
+  .admin-tab-content.active { display: block; }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+  .admin-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid #333; color: #e0e0e0; font-weight: 600; white-space: nowrap; }
+  .admin-table td { padding: 4px 8px; border-bottom: 1px solid #1a1a2e; }
+  .admin-table input[type="text"],
+  .admin-table input[type="number"] {
+    background: #0a0a14; color: #e0e0e0; border: 1px solid #333;
+    padding: 4px 6px; border-radius: 4px; font-size: 12px; width: 100%; min-width: 60px;
+  }
+  .admin-table input[type="checkbox"] { accent-color: #e94560; }
+  .admin-field { margin-bottom: 10px; }
+  .admin-field label { display: inline-block; width: 140px; color: #ccc; font-size: 12px; }
+  .admin-field input[type="text"],
+  .admin-field input[type="number"],
+  .admin-field select {
+    background: #0a0a14; color: #e0e0e0; border: 1px solid #333;
+    padding: 5px 8px; border-radius: 4px; font-size: 12px; width: 260px;
+  }
+  .admin-field input[type="checkbox"] { accent-color: #e94560; }
+  .btn-admin-save { background: #e94560; color: #fff; padding: 8px 20px; margin-top: 8px; }
+  .btn-admin-add {
+    background: #1a1a2e; color: #aaa; border: 1px dashed #444;
+    padding: 5px 14px; font-size: 12px; margin-bottom: 8px;
+  }
+  .btn-admin-add:hover:not(:disabled) { color: #fff; border-color: #888; }
+  .btn-admin-remove { background: none; color: #ef4444; font-size: 16px; padding: 2px 8px; border: none; }
+  .admin-feedback { font-size: 12px; margin-top: 6px; min-height: 18px; }
+  .admin-feedback.success { color: #4ade80; }
+  .admin-feedback.error { color: #ef4444; }
+  .kv-section { margin: 10px 0; border: 1px solid #222; border-radius: 6px; padding: 10px; }
+  .kv-section h4 { font-size: 12px; color: #ccc; margin-bottom: 6px; }
+  .kv-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+  .kv-row input {
+    background: #0a0a14; color: #e0e0e0; border: 1px solid #333;
+    padding: 4px 6px; border-radius: 4px; font-size: 12px; flex: 1;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>Drift</span>Gateway</h1>
+  <div class="header-controls">
+    <span class="demo-badge">DEMO PREVIEW</span>
+    <button class="btn-admin" onclick="toggleAdmin()" title="Admin Settings">Admin</button>
+    <button class="btn-setup" onclick="toggleSetup()" title="Setup &amp; Maintenance Guide">Setup</button>
+    <button class="btn-help" onclick="toggleHelp()" title="Help &amp; Instructions">?</button>
+  </div>
+</header>
+
+<div class="help-panel" id="helpPanel">
+  <h2>DriftGateway &mdash; Automated Rig Configuration</h2>
+  <p style="margin-bottom: 14px;">
+    DriftGateway automatically detects session preferences from VMS iPad kiosks and configures each rig &mdash; zero human intervention required. This dashboard shows live status and provides manual override when needed.
+  </p>
+  <div class="help-columns">
+    <div>
+      <h3>VMS Auto-Polling</h3>
+      <p>DriftGateway polls the SRL VMS API every 20 seconds. When a racer picks their session on the iPad (track, car, drift/race), DriftGateway automatically:</p>
+      <ol style="margin-left: 20px; margin-bottom: 6px;">
+        <li>Detects the booking and maps the pod to the correct rig</li>
+        <li>Resolves the track, car, and mode from VMS selections</li>
+        <li>Writes the ACSM config, restarts acServer, and confirms it's online</li>
+      </ol>
+      <h3>Drift-Disabled Rigs</h3>
+      <p>Some rigs lack drift gear (handbrake, steering angle sensor). These are marked with an orange <span style="background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;">NO DRIFT</span> badge and cannot be put into drift mode.</p>
+      <h3>Manual Override</h3>
+      <p>You can manually control any rig using the controls below. Use the bulk controls to switch all rigs at once, or the per-rig dropdowns for individual rigs.</p>
+    </div>
+    <div>
+      <h3>Status Indicators</h3>
+      <div class="status-legend">
+        <span class="status-legend-item"><span class="legend-dot" style="background:#555"></span> Idle</span>
+        <span class="status-legend-item"><span class="legend-dot" style="background:#4ade80"></span> Running</span>
+        <span class="status-legend-item"><span class="legend-dot" style="background:#facc15"></span> Applying</span>
+        <span class="status-legend-item"><span class="legend-dot" style="background:#f97316"></span> Timeout</span>
+        <span class="status-legend-item"><span class="legend-dot" style="background:#ef4444"></span> Error</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="setup-panel" id="setupPanel">
+  <h2>DriftGateway &mdash; Staff Setup &amp; Maintenance Guide</h2>
+  <details open>
+    <summary>Quick Start (IT/Ops)</summary>
+    <div>
+      <ol>
+        <li>Install Python 3.10+ (check "Add to PATH")</li>
+        <li>Open a terminal in the DriftGateway folder</li>
+        <li><code>pip install -r requirements.txt</code></li>
+        <li>Open the Admin panel in the browser to configure rigs, VMS, and catalog</li>
+        <li><code>uvicorn main:app --host 0.0.0.0 --port 8000</code></li>
+        <li>Open <code>http://localhost:8000</code> in a browser</li>
+      </ol>
+    </div>
+  </details>
+  <details>
+    <summary>Step 2: Configure Your Rigs</summary>
+    <div>
+      <p>Click the <strong>Admin</strong> button in the header, then go to the <strong>Rigs</strong> tab. Each rig needs:</p>
+      <table>
+        <tr><th>Field</th><th>What It Does</th><th>Example</th></tr>
+        <tr><td><code>id</code></td><td>Unique identifier</td><td><code>server_01</code></td></tr>
+        <tr><td><code>name</code></td><td>Display name in UI</td><td><code>Rig 1</code></td></tr>
+        <tr><td><code>cfg_path</code></td><td>ACSM config folder</td><td><code>D:\AcServer\servers\server_01\cfg</code></td></tr>
+        <tr><td><code>exe_path</code></td><td>Path to acServer.exe</td><td><code>D:\AcServer\servers\server_01\acServer.exe</code></td></tr>
+        <tr><td><code>udp_port</code></td><td>Unique UDP port</td><td><code>9601</code></td></tr>
+        <tr><td><code>tcp_port</code></td><td>Unique TCP port</td><td><code>9701</code></td></tr>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Step 3: Configure VMS Integration</summary>
+    <div><p>Click <strong>Admin</strong> &rarr; <strong>VMS</strong> tab. Configure the SRL VMS API connection, pod-to-slot mapping, and activity/circuit/vehicle mappings.</p></div>
+  </details>
+  <details>
+    <summary>Step 4: Configure Content Library</summary>
+    <div><p>Click <strong>Admin</strong> &rarr; <strong>Catalog</strong> tab. Add tracks and cars that match your installed Assetto Corsa content.</p></div>
+  </details>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+  <h2>Admin Settings</h2>
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchAdminTab('rigs')">Rigs</button>
+    <button class="admin-tab" onclick="switchAdminTab('vms')">VMS</button>
+    <button class="admin-tab" onclick="switchAdminTab('catalog')">Catalog</button>
+  </div>
+
+  <div id="adminRigs" class="admin-tab-content active">
+    <table class="admin-table" id="adminRigsTable">
+      <thead>
+        <tr>
+          <th>ID</th><th>Name</th><th>Config Path</th><th>Exe Path</th>
+          <th>UDP</th><th>TCP</th><th>Drift Off</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="adminRigsBody"></tbody>
+    </table>
+    <button class="btn-admin-add" onclick="addAdminRig()">+ Add Rig</button>
+    <br>
+    <button class="btn-admin-save" onclick="saveDemo('rigsFeedback')">Save Rig Config</button>
+    <div class="admin-feedback" id="rigsFeedback"></div>
+  </div>
+
+  <div id="adminVms" class="admin-tab-content">
+    <div class="admin-field">
+      <label>VMS Enabled</label>
+      <input type="checkbox" id="vmsEnabled" checked>
+    </div>
+    <div class="admin-field">
+      <label>Provider</label>
+      <input type="text" id="vmsProvider" value="srl">
+    </div>
+    <div class="admin-field">
+      <label>Poll Interval (sec)</label>
+      <input type="number" id="vmsPollInterval" value="20" min="2">
+    </div>
+    <div class="admin-field">
+      <label>Grace Window (min)</label>
+      <input type="number" id="vmsGraceWindow" value="2" min="0">
+    </div>
+    <div class="admin-field">
+      <label>Base URL</label>
+      <input type="text" id="vmsBaseUrl" value="https://api.simracing.co.uk/v0.1/" style="width:360px">
+    </div>
+    <div class="admin-field">
+      <label>API Key</label>
+      <input type="text" id="vmsApiKey" value="" placeholder="Set via VMS_API_KEY env var or enter here" style="width:360px">
+    </div>
+    <div class="kv-section">
+      <h4>Pod &rarr; Slot Mapping</h4>
+      <div id="kvPodSlot"></div>
+      <button class="btn-admin-add" onclick="addKvRow('kvPodSlot')">+ Add</button>
+    </div>
+    <div class="kv-section">
+      <h4>Activity &rarr; Mode Mapping</h4>
+      <div id="kvActivityMode"></div>
+      <button class="btn-admin-add" onclick="addKvRow('kvActivityMode')">+ Add</button>
+    </div>
+    <div class="kv-section">
+      <h4>Circuit &rarr; Track Mapping</h4>
+      <div id="kvCircuitTrack"></div>
+      <button class="btn-admin-add" onclick="addKvRow('kvCircuitTrack')">+ Add</button>
+    </div>
+    <div class="kv-section">
+      <h4>Vehicle &rarr; Car Mapping</h4>
+      <div id="kvVehicleCar"></div>
+      <button class="btn-admin-add" onclick="addKvRow('kvVehicleCar')">+ Add</button>
+    </div>
+    <button class="btn-admin-save" onclick="saveDemo('vmsFeedback')">Save VMS Config</button>
+    <div class="admin-feedback" id="vmsFeedback"></div>
+  </div>
+
+  <div id="adminCatalog" class="admin-tab-content">
+    <h3 style="font-size:13px;color:#ccc;margin-bottom:6px">Tracks</h3>
+    <table class="admin-table" id="adminTracksTable">
+      <thead><tr><th>Folder ID</th><th>Display Name</th><th></th></tr></thead>
+      <tbody id="adminTracksBody"></tbody>
+    </table>
+    <button class="btn-admin-add" onclick="addAdminTrack()">+ Add Track</button>
+    <h3 style="font-size:13px;color:#ccc;margin:12px 0 6px">Cars</h3>
+    <table class="admin-table" id="adminCarsTable">
+      <thead><tr><th>Folder ID</th><th>Display Name</th><th></th></tr></thead>
+      <tbody id="adminCarsBody"></tbody>
+    </table>
+    <button class="btn-admin-add" onclick="addAdminCar()">+ Add Car</button>
+    <br>
+    <button class="btn-admin-save" onclick="saveDemo('catalogFeedback')">Save Catalog</button>
+    <div class="admin-feedback" id="catalogFeedback"></div>
+  </div>
+</div>
+
+<div class="vms-bar" id="vmsBar">
+  <span class="vms-dot" style="background:#4ade80"></span>
+  <span class="vms-label">VMS Polling Active</span>
+  <span>Polls: 42 | Active: 3 | Last: 2:34:15 PM</span>
+</div>
+
+<div class="bulk-section">
+  <label>Track:</label>
+  <select id="bulkTrack"></select>
+  <label>Car:</label>
+  <select id="bulkCar"></select>
+  <button class="btn-all-drift" onclick="saveDemo('none')">Drift All Rigs</button>
+  <button class="btn-all-race" onclick="saveDemo('none')">Race All Rigs</button>
+</div>
+
+<div class="grid" id="slotGrid"></div>
+
+<script>
+// ── Demo data ──
+
+const catalog = {
+  tracks: [
+    {id: "ks_highlands", name: "Highlands"},
+    {id: "ks_drift", name: "Drift Playground"},
+    {id: "ks_nordschleife", name: "Nordschleife"},
+    {id: "drift", name: "Drift Track"},
+    {id: "ks_vallelunga", name: "Vallelunga"},
+    {id: "trento-bondone", name: "Trento-Bondone"},
+    {id: "magione", name: "Magione"},
+    {id: "ks_zandvoort", name: "Zandvoort"},
+    {id: "imola", name: "Imola"},
+    {id: "monza", name: "Monza"}
+  ],
+  cars: [
+    {id: "ks_toyota_ae86", name: "Toyota AE86"},
+    {id: "ks_nissan_skyline_r34", name: "Nissan Skyline R34"},
+    {id: "ks_mazda_rx7_spirit_r", name: "Mazda RX-7 Spirit R"},
+    {id: "ks_nissan_370z", name: "Nissan 370Z"},
+    {id: "ks_toyota_supra_mkiv", name: "Toyota Supra MK IV"},
+    {id: "ks_bmw_m3_e30_drift", name: "BMW M3 E30 Drift"},
+    {id: "ks_nissan_silvia_s15", name: "Nissan Silvia S15"},
+    {id: "ks_mazda_miata", name: "Mazda Miata"},
+    {id: "ks_ford_mustang_2015", name: "Ford Mustang 2015"},
+    {id: "ks_corvette_c7_stingray", name: "Corvette C7 Stingray"}
+  ]
+};
+
+const slots = [
+  {id:"server_01", name:"Rig 1", mode:"drift", track:"ks_drift", car:"ks_toyota_ae86", status:"running", source:"vms", drift_disabled:false},
+  {id:"server_02", name:"Rig 2", mode:"drift", track:"ks_drift", car:"ks_toyota_ae86", status:"running", source:"vms", drift_disabled:false},
+  {id:"server_03", name:"Rig 3", mode:"drift", track:"ks_drift", car:"ks_toyota_ae86", status:"running", source:"vms", drift_disabled:false},
+  {id:"server_04", name:"Rig 4", mode:"race", track:"ks_vallelunga", car:"ks_nissan_skyline_r34", status:"running", source:"vms", drift_disabled:false},
+  {id:"server_05", name:"Rig 5", mode:"race", track:"ks_vallelunga", car:"ks_nissan_skyline_r34", status:"running", source:"manual", drift_disabled:false},
+  {id:"server_06", name:"Rig 6", mode:"race", track:"ks_highlands", car:"ks_mazda_rx7_spirit_r", status:"running", source:"manual", drift_disabled:true},
+  {id:"server_07", name:"Rig 7", mode:"race", track:"", car:"", status:"idle", source:"manual", drift_disabled:true},
+  {id:"server_08", name:"Rig 8", mode:"race", track:"ks_nordschleife", car:"ks_nissan_370z", status:"running", source:"manual", drift_disabled:true},
+  {id:"server_09", name:"Rig 9", mode:"race", track:"", car:"", status:"error", source:"manual", drift_disabled:true},
+  {id:"server_10", name:"Rig 10", mode:"race", track:"ks_zandvoort", car:"ks_toyota_supra_mkiv", status:"timeout", source:"manual", drift_disabled:true},
+];
+
+let adminRigsData = [
+  {id:"server_01", name:"Rig 1", cfg_path:"D:\\AcServer\\servers\\server_01\\cfg", exe_path:"D:\\AcServer\\servers\\server_01\\acServer.exe", udp_port:9601, tcp_port:9701, drift_disabled:false},
+  {id:"server_02", name:"Rig 2", cfg_path:"D:\\AcServer\\servers\\server_02\\cfg", exe_path:"D:\\AcServer\\servers\\server_02\\acServer.exe", udp_port:9602, tcp_port:9702, drift_disabled:false},
+  {id:"server_03", name:"Rig 3", cfg_path:"D:\\AcServer\\servers\\server_03\\cfg", exe_path:"D:\\AcServer\\servers\\server_03\\acServer.exe", udp_port:9603, tcp_port:9703, drift_disabled:false},
+  {id:"server_04", name:"Rig 4", cfg_path:"D:\\AcServer\\servers\\server_04\\cfg", exe_path:"D:\\AcServer\\servers\\server_04\\acServer.exe", udp_port:9604, tcp_port:9704, drift_disabled:false},
+  {id:"server_05", name:"Rig 5", cfg_path:"D:\\AcServer\\servers\\server_05\\cfg", exe_path:"D:\\AcServer\\servers\\server_05\\acServer.exe", udp_port:9605, tcp_port:9705, drift_disabled:false},
+  {id:"server_06", name:"Rig 6", cfg_path:"D:\\AcServer\\servers\\server_06\\cfg", exe_path:"D:\\AcServer\\servers\\server_06\\acServer.exe", udp_port:9606, tcp_port:9706, drift_disabled:true},
+  {id:"server_07", name:"Rig 7", cfg_path:"D:\\AcServer\\servers\\server_07\\cfg", exe_path:"D:\\AcServer\\servers\\server_07\\acServer.exe", udp_port:9607, tcp_port:9707, drift_disabled:true},
+  {id:"server_08", name:"Rig 8", cfg_path:"D:\\AcServer\\servers\\server_08\\cfg", exe_path:"D:\\AcServer\\servers\\server_08\\acServer.exe", udp_port:9608, tcp_port:9708, drift_disabled:true},
+  {id:"server_09", name:"Rig 9", cfg_path:"D:\\AcServer\\servers\\server_09\\cfg", exe_path:"D:\\AcServer\\servers\\server_09\\acServer.exe", udp_port:9609, tcp_port:9709, drift_disabled:true},
+  {id:"server_10", name:"Rig 10", cfg_path:"D:\\AcServer\\servers\\server_10\\cfg", exe_path:"D:\\AcServer\\servers\\server_10\\acServer.exe", udp_port:9610, tcp_port:9710, drift_disabled:true},
+];
+
+let adminCatalogData = JSON.parse(JSON.stringify(catalog));
+
+// ── Init ──
+
+function init() {
+  populateSelect(document.getElementById('bulkTrack'), catalog.tracks);
+  populateSelect(document.getElementById('bulkCar'), catalog.cars);
+  renderSlots();
+  renderAdminRigs();
+  renderAdminVms();
+  renderAdminCatalog();
+}
+
+function populateSelect(el, items) {
+  el.innerHTML = items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Slot rendering ──
+
+function renderSlots() {
+  const grid = document.getElementById('slotGrid');
+  grid.innerHTML = slots.map(s => {
+    const badgeClass = s.mode === 'drift' ? 'badge-drift' : 'badge-race';
+    const statusClass = `status-${s.status}`;
+    const vmsBadge = s.source === 'vms' ? '<span class="badge-vms">VMS</span>' : '';
+    const noDriftBadge = s.drift_disabled ? '<span class="badge-no-drift">NO DRIFT</span>' : '';
+    const driftOn = !s.drift_disabled;
+    return `
+      <div class="slot">
+        <div class="slot-header">
+          <span class="slot-name">${s.name}${vmsBadge}${noDriftBadge}
+            <span class="drift-toggle">
+              <span class="drift-toggle-label">Drift</span>
+              <label class="toggle-switch">
+                <input type="checkbox" ${driftOn ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+              </label>
+            </span>
+          </span>
+          <span class="badge ${badgeClass}">${s.mode}</span>
+        </div>
+        <div class="status-indicator ${statusClass}">
+          <span class="status-dot"></span>
+          ${capitalize(s.status)}
+        </div>
+        <div class="slot-info">
+          ${s.track ? `<strong>Track:</strong> ${s.track}<br>` : ''}
+          ${s.car ? `<strong>Car:</strong> ${s.car}` : '<em>No session configured</em>'}
+        </div>
+        <div class="slot-controls">
+          <select>
+            ${catalog.tracks.map(t => `<option value="${t.id}" ${t.id === s.track ? 'selected' : ''}>${t.name}</option>`).join('')}
+          </select>
+          <select>
+            ${catalog.cars.map(c => `<option value="${c.id}" ${c.id === s.car ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="slot-controls" style="margin-top: 8px;">
+          <button class="btn-drift" ${s.drift_disabled ? 'disabled' : ''}>${s.drift_disabled ? 'Drift (N/A)' : 'Drift'}</button>
+          <button class="btn-race">Race Reset</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Panel toggles ──
+
+function toggleHelp() {
+  document.getElementById('setupPanel').classList.remove('open');
+  document.getElementById('adminPanel').classList.remove('open');
+  document.getElementById('helpPanel').classList.toggle('open');
+}
+
+function toggleSetup() {
+  document.getElementById('helpPanel').classList.remove('open');
+  document.getElementById('adminPanel').classList.remove('open');
+  document.getElementById('setupPanel').classList.toggle('open');
+}
+
+function toggleAdmin() {
+  document.getElementById('helpPanel').classList.remove('open');
+  document.getElementById('setupPanel').classList.remove('open');
+  document.getElementById('adminPanel').classList.toggle('open');
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+  const tabs = { rigs: 'adminRigs', vms: 'adminVms', catalog: 'adminCatalog' };
+  document.getElementById(tabs[tab]).classList.add('active');
+  const btns = document.querySelectorAll('.admin-tab');
+  const idx = { rigs: 0, vms: 1, catalog: 2 };
+  btns[idx[tab]].classList.add('active');
+}
+
+// ── Admin Rigs ──
+
+function renderAdminRigs() {
+  const tbody = document.getElementById('adminRigsBody');
+  tbody.innerHTML = adminRigsData.map((s, i) => `
+    <tr>
+      <td><input type="text" value="${esc(s.id)}" data-rig="${i}" data-key="id"></td>
+      <td><input type="text" value="${esc(s.name || '')}" data-rig="${i}" data-key="name"></td>
+      <td><input type="text" value="${esc(s.cfg_path)}" data-rig="${i}" data-key="cfg_path"></td>
+      <td><input type="text" value="${esc(s.exe_path)}" data-rig="${i}" data-key="exe_path"></td>
+      <td><input type="number" value="${s.udp_port}" data-rig="${i}" data-key="udp_port" style="width:70px"></td>
+      <td><input type="number" value="${s.tcp_port}" data-rig="${i}" data-key="tcp_port" style="width:70px"></td>
+      <td style="text-align:center"><input type="checkbox" ${s.drift_disabled ? 'checked' : ''} data-rig="${i}" data-key="drift_disabled"></td>
+      <td><button class="btn-admin-remove" onclick="removeAdminRig(${i})" title="Remove">&times;</button></td>
+    </tr>
+  `).join('');
+}
+
+function addAdminRig() {
+  const n = adminRigsData.length + 1;
+  adminRigsData.push({
+    id: `server_${String(n).padStart(2,'0')}`, name: `Rig ${n}`,
+    cfg_path: '', exe_path: '', udp_port: 9600 + n, tcp_port: 9700 + n, drift_disabled: false,
+  });
+  renderAdminRigs();
+}
+
+function removeAdminRig(idx) {
+  adminRigsData.splice(idx, 1);
+  renderAdminRigs();
+}
+
+// ── Admin VMS ──
+
+function renderAdminVms() {
+  renderKvPairs('kvPodSlot', {"1":"server_01","2":"server_02","3":"server_03","4":"server_04","5":"server_05","6":"server_06","7":"server_07","8":"server_08","9":"server_09","10":"server_10"});
+  renderKvPairs('kvActivityMode', {"drift":"drift","drifting":"drift","race":"race","racing":"race","hotlap":"race","default":"race"});
+  renderKvPairs('kvCircuitTrack', {"Drift Playground":"ks_drift","Highlands":"ks_highlands","Nordschleife":"ks_nordschleife","Vallelunga":"ks_vallelunga"});
+  renderKvPairs('kvVehicleCar', {"Toyota AE86":"ks_toyota_ae86","Nissan Skyline R34":"ks_nissan_skyline_r34","Mazda RX-7 Spirit R":"ks_mazda_rx7_spirit_r"});
+}
+
+// ── Admin Catalog ──
+
+function renderAdminCatalog() {
+  document.getElementById('adminTracksBody').innerHTML = adminCatalogData.tracks.map((t, i) => `
+    <tr>
+      <td><input type="text" value="${esc(t.id)}"></td>
+      <td><input type="text" value="${esc(t.name)}"></td>
+      <td><button class="btn-admin-remove" onclick="removeAdminTrack(${i})" title="Remove">&times;</button></td>
+    </tr>
+  `).join('');
+  document.getElementById('adminCarsBody').innerHTML = adminCatalogData.cars.map((c, i) => `
+    <tr>
+      <td><input type="text" value="${esc(c.id)}"></td>
+      <td><input type="text" value="${esc(c.name)}"></td>
+      <td><button class="btn-admin-remove" onclick="removeAdminCar(${i})" title="Remove">&times;</button></td>
+    </tr>
+  `).join('');
+}
+
+function addAdminTrack() { adminCatalogData.tracks.push({id:'', name:''}); renderAdminCatalog(); }
+function addAdminCar() { adminCatalogData.cars.push({id:'', name:''}); renderAdminCatalog(); }
+function removeAdminTrack(idx) { adminCatalogData.tracks.splice(idx, 1); renderAdminCatalog(); }
+function removeAdminCar(idx) { adminCatalogData.cars.splice(idx, 1); renderAdminCatalog(); }
+
+// ── KV pair helpers ──
+
+function renderKvPairs(containerId, obj) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = Object.entries(obj).map(([k, v]) => `
+    <div class="kv-row">
+      <input type="text" value="${esc(k)}" placeholder="Key">
+      <span style="color:#555">&rarr;</span>
+      <input type="text" value="${esc(v)}" placeholder="Value">
+      <button class="btn-admin-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>
+    </div>
+  `).join('');
+}
+
+function addKvRow(containerId) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'kv-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Key">
+    <span style="color:#555">&rarr;</span>
+    <input type="text" placeholder="Value">
+    <button class="btn-admin-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+// ── Demo save feedback ──
+
+function saveDemo(elId) {
+  if (elId === 'none') return;
+  const el = document.getElementById(elId);
+  el.textContent = 'Demo mode — save would persist to server in production';
+  el.className = 'admin-feedback success';
+  setTimeout(() => { el.textContent = ''; el.className = 'admin-feedback'; }, 4000);
+}
+
+init();
+</script>
+</body>
+</html>

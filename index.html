@@ -443,6 +443,59 @@
       </div>
     </div>
   </div>
+
+  <hr style="border-color:#222; margin: 16px 0;">
+  <h3>Architecture Overview</h3>
+  <pre style="font-size:11px; line-height:1.4; color:#ccc; background:#111; padding:10px; border-radius:6px; overflow-x:auto;">
+ iPad Kiosks        DriftGateway (Python)           ACSM Servers
+┌───────────┐      ┌──────────────────────┐      ┌──────────────┐
+│ SRL VMS   │◄────►│  VMS Poller          │      │ server_01/   │
+│  Bookings │ GET  │  (reads bookings)    │      │  cfg/        │
+│  API      │ only │                      │─────►│   *.ini      │
+└───────────┘      │  Config Engine       │write │  acServer.exe│
+                   │  (resolves settings) │      ├──────────────┤
+┌───────────┐      │                      │      │ server_02/   │
+│ Staff     │◄────►│  FastAPI Dashboard   │─────►│  ...         │
+│ Browser   │ HTTP │  (manual overrides)  │      ├──────────────┤
+└───────────┘      │                      │      │  ... ×10     │
+                   └──────────────────────┘      └──────────────┘</pre>
+  <p style="font-size: 12px; color: #999; margin-top: 8px;">
+    <strong>Read-only from VMS:</strong> DriftGateway only <em>reads</em> bookings via HTTP GET. It never writes to VMS or modifies bookings.<br>
+    <strong>Writes to ACSM:</strong> DriftGateway writes INI config files and restarts <code>acServer.exe</code>. INI files are backed up to <code>.ini.bak</code> before every write.
+  </p>
+
+  <hr style="border-color:#222; margin: 16px 0;">
+  <h3>Risk Analysis &amp; Recovery</h3>
+  <table style="font-size: 11px; width: 100%; border-collapse: collapse;">
+    <tr style="border-bottom: 1px solid #222;">
+      <td style="padding: 4px 6px; color: #888;">Risk</td>
+      <td style="padding: 4px 6px; color: #888;">Impact</td>
+      <td style="padding: 4px 6px; color: #888;">Recovery</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #1a1a2e;">
+      <td style="padding: 4px 6px;">INI write fails</td>
+      <td style="padding: 4px 6px;">Rig keeps old config</td>
+      <td style="padding: 4px 6px;">Check disk, retry from UI</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #1a1a2e;">
+      <td style="padding: 4px 6px;">acServer won't start</td>
+      <td style="padding: 4px 6px;">Rig offline</td>
+      <td style="padding: 4px 6px;">Restore <code>.ini.bak</code>, restart via ACSM</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #1a1a2e;">
+      <td style="padding: 4px 6px;">VMS API unreachable</td>
+      <td style="padding: 4px 6px;">Manual still works</td>
+      <td style="padding: 4px 6px;">Poller retries automatically</td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 6px;">DriftGateway crashes</td>
+      <td style="padding: 4px 6px;">Rigs keep running</td>
+      <td style="padding: 4px 6px;">Restart app or use ACSM directly</td>
+    </tr>
+  </table>
+  <p style="font-size: 12px; color: #4ade80; margin-top: 8px;">
+    <strong>Cannot go wrong:</strong> DriftGateway cannot damage VMS data, AC game files, hardware, or other PCs. ACSM can always take back control.
+  </p>
 </div>
 
 <div class="setup-panel" id="setupPanel">
@@ -487,6 +540,45 @@
     <summary>Step 5: Configure Mode Settings (Driver Aids, Damage, Track Grip)</summary>
     <div>
       <p>Click <strong>Admin</strong> &rarr; <strong>Mode Settings</strong> tab to configure driver aids (ABS, TC, Stability Aid), wear/damage settings, and track grip for each mode. You can also set per-rig overrides for specific hardware configurations.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Architecture &amp; Data Flow</summary>
+    <div>
+      <p>DriftGateway sits between SRL VMS (cloud) and ACSM (local servers). It automates config changes that staff would otherwise do manually.</p>
+      <h3>What it reads</h3>
+      <ul>
+        <li><strong>VMS API</strong> &mdash; HTTP GET <code>/bookings</code> every 20 seconds (read-only, never writes to VMS)</li>
+        <li><strong>config.json</strong>, <strong>catalog.json</strong>, and INI templates</li>
+      </ul>
+      <h3>What it writes</h3>
+      <ul>
+        <li><strong>server_cfg.ini</strong> and <strong>entry_list.ini</strong> &mdash; backed up to <code>.ini.bak</code> before every write</li>
+        <li><strong>config.json</strong> &mdash; persists admin changes via atomic writes</li>
+      </ul>
+      <h3>Settings resolution</h3>
+      <p>Settings merge in 3 layers: hardcoded defaults &rarr; global config (Admin &rarr; Mode Settings) &rarr; per-rig overrides. Each layer only overrides the keys it specifies.</p>
+    </div>
+  </details>
+  <details>
+    <summary>INI Backups &amp; Recovery</summary>
+    <div>
+      <p>Every INI write creates a <code>.bak</code> backup. To restore: stop DriftGateway, rename <code>.ini.bak</code> back to <code>.ini</code>, restart acServer.</p>
+      <p>For full rollback: stop DriftGateway and use ACSM normally &mdash; it will write its own INI files. DriftGateway installs nothing and modifies no system files.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Risk Analysis &amp; Safety</summary>
+    <div>
+      <table>
+        <tr><th>Risk</th><th>Impact</th><th>Fix</th></tr>
+        <tr><td>INI write fails</td><td>Rig keeps old config</td><td>Check disk, retry from UI</td></tr>
+        <tr><td>acServer won't start</td><td>Rig offline</td><td>Restore <code>.ini.bak</code>, restart via ACSM</td></tr>
+        <tr><td>VMS API unreachable</td><td>Manual controls still work</td><td>Poller retries automatically</td></tr>
+        <tr><td>DriftGateway crashes</td><td>Running rigs unaffected</td><td>Restart app or use ACSM directly</td></tr>
+        <tr><td>ACSM + DriftGateway conflict</td><td>Config keeps changing</td><td>Use one or the other</td></tr>
+      </table>
+      <p style="color: #4ade80; font-size: 12px; margin-top: 8px;">DriftGateway cannot damage VMS data, AC game files, hardware, or other PCs. ACSM can always take back control.</p>
     </div>
   </details>
 </div>
